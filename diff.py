@@ -1,5 +1,5 @@
 """
-fine common and special lines in files
+find common and special lines in files
 """
 import os
 import sys
@@ -13,7 +13,7 @@ for i,f in enumerate(files):
     with open(f) as o_f:
         lines = o_f.readlines()
         lines = [line.rstrip('\n\r') for line in lines]
-        lines = [line.split()[0] for line in lines if len(line.split()) > 0]
+        lines = [line for line in lines if line]
         lines = set(lines) # delete redundant lines
         lines = sorted(lines)
         file_lines.append([f_path,f_name,lines])
