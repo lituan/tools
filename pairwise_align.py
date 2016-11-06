@@ -8,7 +8,7 @@ python pairwise_align example.fasta
 """
 import os
 import sys
-from wdsp import Wdsp
+# from wdsp import Wdsp
 
 
 def align_lis_lis(lis_lis):
@@ -44,7 +44,7 @@ def align(seq1, seq2):
     seq1 = alns[0][0]
     seq2 = alns[0][1]
     identity = [1 for i, s in enumerate(seq1) if s == seq2[i]]
-    identity = 200.0 * len(identity) / (len(seq1) + len(seq2))
+    identity = 1.0 * len(identity)/ len(seq1)
 
     return float('{0:<4.2f}'.format(identity))
 
@@ -113,8 +113,29 @@ def write_resutls(seqs, scores, file_path, file_name):
         for score, pair in pair_scores:
             print >> w_f, score, '\t', '{0:<25}{1:<}'.format(pair[0], pair[1])
 
+    # change similarity to dissimilarity
+    length = len(scores)
+    for i in xrange(length):
+        for j in xrange(length):
+            scores[i][j] = 1.0 - scores[i][j]
 
-def plot_heatmap(seqs, scores):
+    result = [[seq[0]] + score for seq, score in zip(seqs, scores)]
+    header = [['ID'] + [seq[0] for seq in seqs]]
+    result = header + result
+
+    filename = os.path.join(file_path, file_name + '_distances_tab.txt')
+    with open(filename, 'w') as w_f:
+        for r in result:
+            print >> w_f, '\t'.join([str(ri)for ri in r])
+
+    result = align_lis_lis(result)
+    filename = os.path.join(file_path, file_name + '_distances_align.txt')
+    with open(filename, 'w') as w_f:
+        for r in result:
+            print >> w_f, '\t'.join([str(ri)for ri in r])
+
+
+def plot_heatmap(seqs, scores,file_name):
     import matplotlib.pyplot as plt
     from numpy import array
 
@@ -126,9 +147,9 @@ def plot_heatmap(seqs, scores):
     ax.axis('off')
     heatmap = ax.pcolor(scores, cmap=plt.cm.Blues)
     cb = plt.colorbar(heatmap)
-    # ax.set_xticklabels(row_labels,minor=False)
-    # ax.set_yticklabels(column_labels,minor=False)
-    fig.savefig('test')
+    ax.set_xticklabels(row_labels,minor=False)
+    ax.set_yticklabels(column_labels,minor=False)
+    fig.savefig(file_name)
 
 
 def main():
@@ -142,7 +163,7 @@ def main():
     file_path, file_name = os.path.split(sys.argv[-1])
     file_name, file_extention = os.path.splitext(file_name)
     write_resutls(seqs, scores, file_path, file_name)
-    plot_heatmap(seqs, scores)
+    plot_heatmap(seqs, scores,file_name)
 
 if __name__ == "__main__":
     main()

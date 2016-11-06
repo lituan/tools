@@ -24,7 +24,8 @@ def readfa(fa_f):
 
 def writefa(seqs):
     with open('seq80.fa', 'w') as w_f:
-        seqs = [(pro.split()[0].split('|')[2], seq) for pro, seq in seqs]
+        # seqs = [(pro.split()[0].split('|')[2], seq) for pro, seq in seqs]
+        seqs = [(pro, seq) for pro, seq in seqs]
         seqs = sorted(seqs)
         for pro, seq in seqs:
             print >> w_f, '>{}'.format(pro)
