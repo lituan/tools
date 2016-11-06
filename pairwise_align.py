@@ -115,11 +115,14 @@ def write_resutls(seqs, scores, file_path, file_name):
 
     # change similarity to dissimilarity
     length = len(scores)
+    distances = []
     for i in xrange(length):
+        distance = []
         for j in xrange(length):
-            scores[i][j] = 1.0 - scores[i][j]
+            distance[j] = 1.0 - scores[i][j]
+        distances.append(distance)
 
-    result = [[seq[0]] + score for seq, score in zip(seqs, scores)]
+    result = [[seq[0]] + score for seq, score in zip(seqs, distances)]
     header = [['ID'] + [seq[0] for seq in seqs]]
     result = header + result
 
