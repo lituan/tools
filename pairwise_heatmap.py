@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
-# Example usage: python pairwise_heatmap.py --i /Users/me/pim.txt
-
+"""
+Example usage: python pairwise_heatmap.py --i /Users/me/pim.txt
+"""
 ### hierarchical_clustering.py
 #Copyright 2005-2012 J. David Gladstone Institutes, San Francisco California
 #Author Nathan Salomonis - nsalomonis@gmail.com
