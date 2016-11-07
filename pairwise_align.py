@@ -46,6 +46,7 @@ def align(seq1, seq2):
     identity = [1 for i, s in enumerate(seq1) if s == seq2[i]]
     identity = 1.0 * len(identity)/ len(seq1)
 
+
     return float('{0:<4.2f}'.format(identity))
 
 
@@ -119,7 +120,7 @@ def write_resutls(seqs, scores, file_path, file_name):
     for i in xrange(length):
         distance = []
         for j in xrange(length):
-            distance[j] = 1.0 - scores[i][j]
+            distance.append(1.0 - scores[i][j])
         distances.append(distance)
 
     result = [[seq[0]] + score for seq, score in zip(seqs, distances)]

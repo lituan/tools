@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
-# Example usage: python pairwise_heatmap.py --i /Users/me/pim.txt
-
 ### hierarchical_clustering.py
 #Copyright 2005-2012 J. David Gladstone Institutes, San Francisco California
 #Author Nathan Salomonis - nsalomonis@gmail.com
@@ -42,7 +39,6 @@ import string
 import time
 import sys, os
 import getopt
-import lt
 
 ################# Perform the hierarchical clustering #################
 
@@ -138,8 +134,8 @@ def heatmap(x, row_header, column_header, row_method,
         D1 = dist.squareform(d1)  # full matrix
         ax1 = fig.add_axes([ax1_x, ax1_y, ax1_w, ax1_h], frame_on=True) # frame_on may be False
         Y1 = sch.linkage(D1, method=row_method, metric=row_metric) ### gene-clustering metric - 'average', 'single', 'centroid', 'complete'
-        # Z1 = sch.dendrogram(Y1, orientation='right')
-        Z1 = sch.dendrogram(Y1, orientation='left')
+        Z1 = sch.dendrogram(Y1, orientation='right')
+        # Z1 = sch.dendrogram(Y1, orientation='left')
         ind1 = sch.fcluster(Y1,0.7*max(Y1[:,2]),'distance') ### This is the default behavior of dendrogram
         ax1.set_xticks([]) ### Hides ticks
         ax1.set_yticks([])
@@ -346,11 +342,13 @@ def importData(filename):
 
     with open(filename,'rU') as o_f:
         lines = o_f.readlines()
-        lines = [line.strip('\n') for line in lines] # remove EOF
+        lines = [line.rstrip('\n\r') for line in lines] # remove EOF
+        lines = [line for line in lines if ':' in line] # remove comment lines
         column_header = lines[0].split()[1:]
+        column_header = [line.split()[1] for line in lines]
         row_header = column_header
-        matrix = [line.split()[1:] for line in lines[1:]]
-        matrix = [map(float,row) for row in matrix]
+        matrix = [line.split()[2:] for line in lines]
+        matrix = [map(lambda x: float(x)/100.0,row) for row in matrix]
 
     time_diff = str(round(time.time()-start_time,1))
     try:
@@ -377,7 +375,7 @@ def main():
     ################  Comand-line arguments ################
     if len(sys.argv[1:])<=1:  ### Indicates that there are insufficient number of command-line arguments
         print "Warning! Please designate a tab-delimited input expression file in the command-line"
-        print "Example: python pairwise_heatmap.py --i /Users/me/pim.txt"
+        print "Example: python hierarchical_clustering.py --i /Users/me/logfolds.txt"
         sys.exit()
     else:
         options, remainder = getopt.getopt(sys.argv[1:],'', ['i=','row_header','column_method',
