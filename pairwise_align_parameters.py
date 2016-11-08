@@ -13,11 +13,12 @@ from Bio import pairwise2
 from Bio.SubsMat import MatrixInfo as matlist
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import cm
 
 def align(seq1, seq2):
     matrix = matlist.blosum62
-    opens = range(-2,-30,-1)
-    extends = map(lambda x: x/50.0, range(-1,-101,-1))
+    opens = range(-2,-35,-1)
+    extends = map(lambda x: x/100.0, range(-1,-200,-1))
     # gap_open = -10  # usual value
     # gap_extend = -0.5  # usual value
 
@@ -45,31 +46,33 @@ def align(seq1, seq2):
     # plot scores
     fig = plt.figure()
     ax = fig.add_subplot(111,projection='3d')
-    ax.plot_surface(gx,gy,scores)
-    ax.set_xlabel('gap_open')
-    ax.set_ylabel('gap_extend')
-    ax.set_zlabel('score')
+    ax.plot_surface(gx,gy,scores,alpha=0.3)
+    ax.contour(gx,gy,scores,zdir='z',offset=200,cmap=cm.coolwarm)
+    ax.contour(gx,gy,scores,zdir='x',offset=-40,cmap=cm.coolwarm)
+    ax.contour(gx,gy,scores,zdir='y',offset=0,cmap=cm.coolwarm)
+    ax.set_xlim(-40,0)
+    ax.set_ylim(-3,0)
+    ax.set_zlim(200,900)
+    # ax.plot_wireframe(gx,gy,scores)
+    ax.set_xlabel('gap_open',labelpad=10)
+    ax.set_ylabel('gap_extend',labelpad=10)
+    ax.set_zlabel('score',labelpad=10)
     fig.savefig('align_score.png')
 
     # plot scores
     fig = plt.figure()
     ax = fig.add_subplot(111,projection='3d')
-    ax.plot_surface(gx,gy,identities)
-    ax.set_xlabel('gap_open')
-    ax.set_ylabel('gap_extend')
-    ax.set_zlabel('identity')
+    ax.plot_surface(gx,gy,identities,alpha=0.3)
+    ax.contour(gx,gy,scores,zdir='z',offset=0.3,cmap=cm.coolwarm)
+    ax.contour(gx,gy,scores,zdir='x',offset=-40,cmap=cm.coolwarm)
+    ax.contour(gx,gy,scores,zdir='y',offset=0,cmap=cm.coolwarm)
+    ax.set_xlim(-40,0)
+    ax.set_ylim(-3,0)
+    ax.set_zlim(0.3,0.38)
+    ax.set_xlabel('gap_open',labelpad=10)
+    ax.set_ylabel('gap_extend',labelpad=10)
+    ax.set_zlabel('identity',labelpad=10)
     fig.savefig('align_identity.png')
-
-
-    seq1 = best_alns[0][0]
-    seq2 = best_alns[0][1]
-    identity = [1 for i, s in enumerate(seq1) if s == seq2[i]]
-    identity = 1.0 * len(identity)/ len(seq1)
-
-    print identity
-
-
-    return float('{0:<4.2f}'.format(identity))
 
 
 def readfa(fa_f):
