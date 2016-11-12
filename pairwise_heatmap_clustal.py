@@ -229,7 +229,7 @@ def heatmap(x, row_header, column_header, row_method,
 
     ### Render the graphic
     if len(row_header)>50 or len(column_header)>50:
-        plt.rcParams['font.size'] = 5
+        plt.rcParams['font.size'] = 4
     else:
         plt.rcParams['font.size'] = 8
 
@@ -397,12 +397,12 @@ def main():
 
     if len(matrix)>0:
         try:
-            heatmap(matrix, row_header, column_header, row_method, column_method, row_metric, column_metric, color_gradient, filename,max_labels=50,bottom_rotation=310)
+            heatmap(matrix, row_header, column_header, row_method, column_method, row_metric, column_metric, color_gradient, filename,max_labels=70,bottom_rotation=310)
         except Exception:
             print 'Error using %s ... trying euclidean instead' % row_metric
             row_metric = 'euclidean'
             try:
-                heatmap(matrix, row_header, column_header, row_method, column_method, row_metric, column_metric, color_gradient, filename,max_labels=50,bottom_rotation=310)
+                heatmap(matrix, row_header, column_header, row_method, column_method, row_metric, column_metric, color_gradient, filename,max_labels=70,bottom_rotation=310)
             except IOError:
                 print 'Error with clustering encountered'
 

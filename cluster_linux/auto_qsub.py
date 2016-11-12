@@ -54,8 +54,8 @@ def files_in_dir(directory):
     return final_files
 
 
-def create_temp_pbs(command, queue):
-    with open('temp_pbs', 'w') as w_f:
+def create_temp_pbs(command, queue,temp_name):
+    with open(temp_name, 'w') as w_f:
         print >> w_f, '#! /bin/bash'
         print >> w_f, '#PBS -q' + ' ' + queue
         print >> w_f, '#PBS -l nodes=1:ppn=1,walltime=2:00:00' # hour:minute:seconds
@@ -66,8 +66,8 @@ def create_temp_pbs(command, queue):
         print >> w_f, command
 
 
-def delete_temp_pbs():
-    subprocess.call('rm temp_pbs', shell=True)
+def delete_temp_pbs(temp_name):
+    subprocess.call('rm '+temp_name, shell=True)
 
 
 def main():
@@ -81,13 +81,16 @@ def main():
         f = data_files[-1]
         new_command = command + ' ' + f
         good_queue = queue_state()
+        f_path,f_name = os.path.split(f)
+        f_short_name,f_extention = os.path.splitext(f_name)
+        temp_name = command+'_'+f_short_name
         # try to submmit the job to the available queue by trying each queue by
         # the order
         while len(good_queue) > 0:
             queue = good_queue[0]
-            create_temp_pbs(new_command, queue)
+            create_temp_pbs(new_command, queue,temp_name)
             try:
-                output = subprocess.check_output(['qsub', 'temp_pbs'])
+                output = subprocess.check_output(['qsub', temp_name])
                 lines = output.splitlines()
                 output = '\n'.join(lines)
                 print 'qsub success',queue
@@ -97,7 +100,7 @@ def main():
                 print >> log_f, output
                 print >> log_f, new_command
                 print >> log_f, '*' * 80
-                delete_temp_pbs()
+                delete_temp_pbs(temp_name)
                 data_files.pop()
                 break # if success, stop trying rest queues and try next data_file
             except Exception,e:
@@ -112,6 +115,4 @@ def main():
 if __name__ == "__main__":
     main()
 
-    dd
-    dd
 
