@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Example usage: python pairwise_heatmap_clustal.py --i /Users/me/pim.txt
+font size is affected by figsize, when figsize is small, if set too low a font size, the label will not show
 """
 ### hierarchical_clustering.py
 #Copyright 2005-2012 J. David Gladstone Institutes, San Francisco California
@@ -72,7 +73,9 @@ def heatmap(x, row_header, column_header, row_method,
     ### Scale the Matplotlib window size
     default_window_hight = 8.5
     default_window_width = 12
-    fig = plt.figure(figsize=(default_window_width,default_window_hight)) ### could use m,n to scale here
+    m = len(column_header)*2.0/50
+    n = len(row_header)*2.0/50
+    fig = plt.figure(figsize=(default_window_width*m,default_window_hight*n)) ### could use m,n to scale here
     color_bar_w = 0.015 ### Sufficient size to show
 
     ## calculate positions for all elements
@@ -229,7 +232,7 @@ def heatmap(x, row_header, column_header, row_method,
 
     ### Render the graphic
     if len(row_header)>50 or len(column_header)>50:
-        plt.rcParams['font.size'] = 4
+        plt.rcParams['font.size'] = 5
     else:
         plt.rcParams['font.size'] = 8
 

@@ -58,7 +58,7 @@ def create_temp_pbs(command, queue,temp_name):
     with open(temp_name, 'w') as w_f:
         print >> w_f, '#! /bin/bash'
         print >> w_f, '#PBS -q' + ' ' + queue
-        print >> w_f, '#PBS -l nodes=1:ppn=1,walltime=2:00:00' # hour:minute:seconds
+        print >> w_f, '#PBS -l nodes=1:ppn=1,walltime=240:00:00' # hour:minute:seconds
         print >> w_f, '#PBS -j oe'
         print >> w_f, 'cd $PBS_O_WORKDIR'
         print >> w_f, ' '
@@ -75,8 +75,8 @@ def main():
     directory = sys.argv[-1]
     data_files = files_in_dir(directory)
 
-    log_f_name = command + ' ' + os.path.split(directory)[-1]
-    log_f = open(log_f_name + "-" + 'auto_qsub_log.txt', 'w')
+    log_f_name = command + '_' + os.path.split(directory)[-1]
+    log_f = open(log_f_name + "_" + 'auto_qsub_log.txt', 'w')
     while len(data_files) > 0:
         f = data_files[-1]
         new_command = command + ' ' + f
