@@ -80,12 +80,13 @@ def main():
     while len(data_files) > 0:
         f = data_files[-1]
         new_command = command + ' ' + f
-        good_queue = queue_state()
         f_path,f_name = os.path.split(f)
         f_short_name,f_extention = os.path.splitext(f_name)
         temp_name = command+'_'+f_short_name
         # try to submmit the job to the available queue by trying each queue by
         # the order
+        while len(good_queue) < 1:
+            good_queue = queue_state()
         while len(good_queue) > 0:
             queue = good_queue[0]
             create_temp_pbs(new_command, queue,temp_name)
@@ -107,7 +108,9 @@ def main():
                 print e
                 continue
             finally:
-                good_queue.pop(0)
+                good_queue = queue_state()
+                while len(good_queue) < 1:
+                    good_queue = queue_state()
         else:
             continue
     log_f.close()

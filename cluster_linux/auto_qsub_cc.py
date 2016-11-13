@@ -71,42 +71,41 @@ def delete_temp_pbs(temp_name):
 
 
 def main():
-    command = sys.argv[-2]
-    if os.path.isfile(sys.argv[-1]):
-        f = sys.argv[-1]
-        log_f_name = command + '_' + os.path.split(directory)[-1]
-        log_f = open(log_f_name + "_" + 'auto_qsub_log.txt', 'w')
-        new_command = command + ' ' + f
+    command = sys.argv[1]
+    total_command = ' '.join(sys.argv[1:])
+    f = sys.argv[-1]
+    f_name = os.path.splitext(os.path.split(f)[-1])[0]
+    log_f = open(f_name + "_" + 'auto_qsub_log.txt', 'w')
+    temp_name = command+'_'+f_name
+    # try to submmit the job to the available queue by trying each queue by
+    # the order
+    while len(good_queue) < 1:
         good_queue = queue_state()
-        f_path,f_name = os.path.split(f)
-        f_short_name,f_extention = os.path.splitext(f_name)
-        temp_name = command+'_'+f_short_name
-        # try to submmit the job to the available queue by trying each queue by
-        # the order
-        while len(good_queue) > 0:
-            queue = good_queue[0]
-            create_temp_pbs(new_command, queue,temp_name)
-            try:
-                output = subprocess.check_output(['qsub', temp_name])
-                lines = output.splitlines()
-                output = '\n'.join(lines)
-                print 'qsub success',queue
-                print new_command
-                print output
-                print >> log_f,queue
-                print >> log_f, output
-                print >> log_f, new_command
-                print >> log_f, '*' * 80
-                delete_temp_pbs(temp_name)
-                break # if success, stop trying rest queues and try next data_file
-            except Exception,e:
-                print e
-                continue
-            finally:
-                good_queue.pop(0)
-        else:
+    while len(good_queue) > 0:
+        queue = good_queue[0]
+        create_temp_pbs(total_command, queue,temp_name)
+        try:
+            output = subprocess.check_output(['qsub', temp_name])
+            lines = output.splitlines()
+            output = '\n'.join(lines)
+            print 'qsub success',queue
+            print total_command
+            print output
+            print >> log_f,queue
+            print >> log_f, output
+            print >> log_f, total_command
+            print >> log_f, '*' * 80
+            delete_temp_pbs(temp_name)
+            break # if success, stop trying rest queues and try next data_file
+        except Exception,e:
+            print e
             continue
-        log_f.close()
+        finally:
+            good_queue = queue_state()
+            while len(good_queue) < 1:
+                good_queue = queue_state()
+
+    log_f.close()
 
 if __name__ == "__main__":
     main()
