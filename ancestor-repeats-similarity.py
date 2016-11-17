@@ -40,8 +40,6 @@ def align(seq1, seq2):
 
     seq1 = alns[0][0]
     seq2 = alns[0][1]
-    print seq1
-    print seq2
     identity = [1 for i, s in enumerate(seq1) if s == seq2[i]]
     identity = 1.0 * len(identity) / len(seq1)
     return float('{0:<4.2f}'.format(identity))
@@ -70,7 +68,7 @@ def get_similarity(pro_repeats):
     for i in range(len_repeats):
         for j in range(len_repeats):
             if j > i:
-                title.append(str(i) + '_' + str(j))
+                title.append('r'+str(i+1) + '_' + str(j+1))
     pro_repeats_similarity.append(title)
 
     for pro, repeats in pro_repeats:
