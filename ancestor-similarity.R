@@ -7,12 +7,14 @@ md$group[md$id > 30] <- "Ancestor"
 md$group[md$id == 59] <- "LCA"
 md$group <- factor(md$group, levels = c("Now", "Ancestor", "LCA"))
 
+
+
 pvalue <- c()
 i <- 1
 for (l in levels(md$variable)) {
   m1 <- md[md$variable == l & md$id <= 30, ]$value
   m2 <- md[md$variable == l & md$id > 40, ]$value
-  h <- t.test(m1, m2)
+  h <- t.test(m1, m2,alternative = 'less')
   pvalue[i] <- h$p.value
   i <- i + 1
 }
@@ -31,14 +33,14 @@ for (l in levels(md$variable)) {
   ax[i] <- i
   i <- i + 1
 }
-
 pd$x <- ax
 pd$y <- ay
 
+mdd <- md[md$id <= 30 | md$id > 40,]
 # stripplot(value~variable,data=md,groups=group,col=c('green','blue','red'),xlab='Repeat
 # pairs',ylab='similarity',main='Distribution of Repeat
 # Similarities',legend=c('now','ance','LCA'))
-p <- ggplot(md, aes(x = variable, y = value, color = group)) + 
+p <- ggplot(mdd, aes(x = variable, y = value, color = group)) + 
   geom_jitter(position = position_jitter(0.2))
 p + scale_color_manual(values = c("blue", "green", "red")) + 
   annotate("text", label = pd$indicator, x = pd$x, y = pd$y) + 
