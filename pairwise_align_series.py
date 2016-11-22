@@ -3,7 +3,7 @@ import sys
 from wdsp import Wdsp
 
 """
-input seqs in fasta format, compare the rese sequences with the firs one,
+input seqs in fasta format, compare the rest sequences with the firs one,
 rank the sequences according to the similarity,
 output sequence similarity series
 usuage example:

@@ -21,14 +21,13 @@ def readfa(fa_f):
 
 
 def writefa(seqs):
-    with open('seq80.fa', 'w') as w_f:
-        seqs = [(pro.split()[0].split('|')[2], seq) for pro, seq in seqs]
-        seqs = sorted(seqs)
-        for pro, seq in seqs:
-            with open(pro + '.fa', 'w') as w_f:
-                print >> w_f, '>{}'.format(pro)
-                for i in [seq[i:i + 80] for i in range(0, len(seq), 80)]:
-                    print >> w_f, i
+    seqs = [(pro.split()[0], seq) for pro, seq in seqs]
+    # seqs = sorted(seqs)
+    for pro, seq in seqs:
+        with open(pro + '.fa', 'w') as w_f:
+            print >> w_f, '>{}'.format(pro)
+            for i in [seq[i:i + 80] for i in range(0, len(seq), 80)]:
+                print >> w_f, i
 
 with open(sys.argv[-1]) as fa_f:
     seqs = readfa(fa_f)
