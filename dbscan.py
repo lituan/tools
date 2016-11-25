@@ -14,6 +14,8 @@ import pandas as pd
 import seaborn as sys
 import numpy as np
 import matplotlib as mpl
+import scipy.cluster.hierarchy as sch
+import scipy.spatial.distance as spd
 
 IDENTITY_CUTOFF = 0.9
 
@@ -127,23 +129,25 @@ def BlueGreenYellow():
     my_cmap = mpl.colors.LinearSegmentedColormap('my_colormap',cdict,256)
     return my_cmap
 
-def plot_heatmap(seqs, scores,file_name):
+def plot_heatmap(seqs, scores,file_name,method='average'):
 
-    bgy = BlueGreenYellow()
     column_labels = [s[0] for s in seqs]
     row_labels = column_labels
     scores = [map(lambda x: float(x), row) for row in scores]
     scores = np.array(scores)
+    distances = [map(lambda x: 1-x,row) for row in scores]
+    linkage = sch.linkage(spd.squareform(distances),method=method)
     df = pd.DataFrame(scores,columns=column_labels, index=row_labels)
 
-    if len(df.columns) > 50:
-        sns_plot = sns.clustermap(df,cmap=bgy,xticklabels='',yticklabels='')
+    if len(df.columns) > 20:
+        sns_plot = sns.clustermap(df,row_linkage=linkage,col_linkage=linkage,xticklabels='',yticklabels='')
     else:
-        sns_plot = sns.clustermap(df,cmap=bgy)
+        sns_plot = sns.clustermap(df,figsize=figsize,row_linkage=linkage,col_linkage=linkage,annot=True,fmt='3.2f')
         plt.setp(sns_plot.ax_heatmap.yaxis.get_majorticklabels(), rotation=20)
         plt.setp(sns_plot.ax_heatmap.xaxis.get_majorticklabels(), rotation=70)
     # plt.yticks(rotation=90)
     sns_plot.savefig(file_name+'.png')
+    plt.close('all')
 
 def plot_heatmap(seqs, scores,file_name):
     import matplotlib.pyplot as plt

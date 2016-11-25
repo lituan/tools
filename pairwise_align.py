@@ -8,6 +8,12 @@ python pairwise_align example.fasta
 """
 import os
 import sys
+import seaborn as sns
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import scipy.cluster.hierarchy as sch
+import scipy.spatial.distance as spd
 # from wdsp import Wdsp
 
 
@@ -140,21 +146,26 @@ def write_resutls(seqs, scores, file_path, file_name):
 
 
 def plot_heatmap(seqs, scores,file_name):
-    import matplotlib.pyplot as plt
-    from numpy import array
 
     column_labels = [s[0] for s in seqs]
     row_labels = column_labels
-    scores = array(scores)
+    scores = [map(lambda x: float(x), row) for row in scores]
+    scores = np.array(scores)
+    distances = [map(lambda x: 1-x,row) for row in scores]
+    linkage = sch.linkage(spd.squareform(distances),method='average')
+    df = pd.DataFrame(scores,columns=column_labels, index=row_labels)
 
-    fig, ax = plt.subplots()
-    ax.axis('off')
-    heatmap = ax.pcolor(scores, cmap=plt.cm.Blues)
-    cb = plt.colorbar(heatmap)
-    ax.set_xticklabels(row_labels,minor=False)
-    ax.set_yticklabels(column_labels,minor=False)
-    fig.savefig(file_name)
-
+    if len(df.columns) > 100:
+        # sns_plot = sns.clustermap(df,row_linkage=linkage,col_linkage=linkage,annot=True,fmt='3.2f',xticklabels='',yticklabels='')
+        sns_plot = sns.clustermap(df,row_linkage=linkage,col_linkage=linkage,xticklabels='',yticklabels='')
+    else:
+        sns_plot = sns.clustermap(df,figsize=figsize,row_linkage=linkage,col_linkage=linkage,annot=True,fmt='3.2f')
+        # sns_plot = sns.clustermap(df,row_linkage=linkage,col_linkage=linkage)
+        plt.setp(sns_plot.ax_heatmap.yaxis.get_majorticklabels(), rotation=20)
+        plt.setp(sns_plot.ax_heatmap.xaxis.get_majorticklabels(), rotation=70)
+    # plt.yticks(rotation=90)
+    sns_plot.savefig(file_name+'.png')
+    plt.close('all')
 
 def main():
     with open(sys.argv[-1]) as fa_f:
