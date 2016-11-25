@@ -12,7 +12,7 @@ import sys
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sys
-from numpy import array
+import numpy as np
 import matplotlib as mpl
 
 IDENTITY_CUTOFF = 0.9
@@ -133,7 +133,7 @@ def plot_heatmap(seqs, scores,file_name):
     column_labels = [s[0] for s in seqs]
     row_labels = column_labels
     scores = [map(lambda x: float(x), row) for row in scores]
-    scores = array(scores)
+    scores = np.array(scores)
     df = pd.DataFrame(scores,columns=column_labels, index=row_labels)
 
     if len(df.columns) > 50:

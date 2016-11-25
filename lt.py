@@ -8,6 +8,7 @@ import sys
 import time
 from functools import wraps
 from collections import OrderedDict
+from colorama import init,deinit,Fore,Back,Style
 import cPickle as pickle
 
 
@@ -33,10 +34,10 @@ def zen_of_python():
            'If the implementation is easy to explain, it may be a good idea',
            "Namespaces are one honking great idea -- let's do more of those!"]
 
-    print '-' * 80
+    print '-' * 40
     print datetime.datetime.now()
     print ZEN[random.randint(0, 18)]
-    print '-' * 80
+    print '-' * 40
 
 
 def log(fn):
@@ -62,15 +63,20 @@ def run_time(fn):
             zen_of_python()
             end = time.time()
             process = (end - start)
+            init()
             if process > 100:
                 process = process / 60.0
-                print '{0:s} run {1:.2f}minutes'.format(fn.__name__, process)
+                print Fore.GREEN + '{0:s} run {1:.2f}minutes'.format(fn.__name__, process)
+                print Style.RESET_ALL
             elif process < 1:
                 process = process * 1000
-                print '{0:s} run {1:.2f}us'.format(fn.__name__, process)
+                print Fore.GREEN + '{0:s} run {1:.2f}us'.format(fn.__name__, process)
+                print Style.RESET_ALL
             else:
-                print '{0:s} run {1:.2f}s'.format(fn.__name__, process)
+                print Fore.GREEN + '{0:s} run {1:.2f}s'.format(fn.__name__, process)
+                print Style.RESET_ALL
             print '-' * 80
+            deinit()
     return wrapper
 
 
