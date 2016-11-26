@@ -54,36 +54,48 @@ def get_pim(seqs):
         scores.append(score_i)
     return scores
 
-@lt.run_time
-def get_neighbors(seqs,scores,cutoff):
-    neighbors = []
-    for i,seq in enumerate(seqs):
-        seq_neighbors = [seq[0]]
-        for j in range(len(seqs)):
-            if j != i:
-                if scores[i][j] > cutoff:
-                    seq_neighbors.append(seqs[j][0])
-        neighbors.append(seq_neighbors)
-    return neighbors
 
 @lt.run_time
-def remove_redundancy(seqs,scores,neighbors,good_list):
+def remove_redundancy(seqs,scores,cutoff,good_list=[],bad_list=[]):
+
+    def get_neighbors():
+        neighbors = []
+        for i,seq in enumerate(seqs):
+            seq_neighbors = [seq[0]]
+            for j in range(len(seqs)):
+                if j != i:
+                    if scores[i][j] > cutoff:
+                        seq_neighbors.append(seqs[j][0])
+            neighbors.append(seq_neighbors)
+        return neighbors
+
+
+    def sort_good_bad(neighbor_list):
+        new_good_list = [g for g in good_list if not g in bad_list]
+        new_bad_list = [g for g in good_list if g in bad_list] + bad_list
+        good = [n for n in neighbor_list if n in new_good_list]
+        bad = [n for n in neighbor_list if n in new_bad_list]
+        middle = [n for n in neighbor_list if (not n in new_good_list) and (not n in new_bad_list)]
+        return good+middle+bad
+
+    neighbors = get_neighbors()
+
     while max([len(n) for n in neighbors]) > 1:
         neighbors = sorted(neighbors,key=lambda x: len(x),reverse=True)
+        neighbors = map(sort_good_bad,neighbors)
         for seq in neighbors[0][1:]:
             if not seq in good_list:
                 for n in neighbors:
                     if seq in n:
                         n.pop(n.index(seq))
                 neighbors = [n for n in neighbors if len(n) > 0]
-                neighbors = [neighbors[0]] + [n for n in neighbors[1:] if not n[0] == seq]
         if len(neighbors[0]) > 1:
             for seq in neighbors[0][:-1]:
                 for n in neighbors:
                     if seq in n:
                         n.pop(n.index(seq))
                 neighbors = [n for n in neighbors if len(n) > 0]
-                neighbors = [n for n in neighbors if not n[0] == seq]
+
 
     nr_list = set([n[0] for n in neighbors])
     nr_seqs = [seq for seq in seqs if seq[0] in nr_list ]
@@ -112,7 +124,7 @@ def plot_heatmap(seqs, scores,file_name):
         # sns_plot = sns.clustermap(df,row_linkage=linkage,col_linkage=linkage,annot=True,fmt='3.2f',xticklabels='',yticklabels='')
         sns_plot = sns.clustermap(df,row_linkage=linkage,col_linkage=linkage,xticklabels='',yticklabels='')
     else:
-        sns_plot = sns.clustermap(df,figsize=figsize,row_linkage=linkage,col_linkage=linkage,annot=True,fmt='3.2f')
+        sns_plot = sns.clustermap(df,row_linkage=linkage,col_linkage=linkage,annot=True,fmt='3.2f')
         # sns_plot = sns.clustermap(df,row_linkage=linkage,col_linkage=linkage)
         plt.setp(sns_plot.ax_heatmap.yaxis.get_majorticklabels(), rotation=20)
         plt.setp(sns_plot.ax_heatmap.xaxis.get_majorticklabels(), rotation=70)
@@ -132,15 +144,12 @@ def write_msa(seqs,filename):
 
 @lt.run_time
 def main():
-    cutoff = 0.2
-    good_list = []
+    cutoff = 0.6
     seqs = read_msa(sys.argv[-1])
 
     scores = get_pim(seqs)
-    neighbors = get_neighbors(seqs,scores,cutoff)
-    nr_seqs,nr_scores = remove_redundancy(seqs,scores,neighbors,good_list)
+    nr_seqs,nr_scores = remove_redundancy(seqs,scores,cutoff)
 
-    figsize=(len(nr_seqs),len(nr_seqs))
     plot_heatmap(nr_seqs,nr_scores,'nr_seqs_'+'_'+str(cutoff))
 
     # write_msa(nr_seqs,'nr_seqs_'+str(cutoff))
