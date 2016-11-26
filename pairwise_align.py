@@ -152,7 +152,7 @@ def plot_heatmap(seqs, scores,file_name):
     scores = [map(lambda x: float(x), row) for row in scores]
     scores = np.array(scores)
     distances = [map(lambda x: 1-x,row) for row in scores]
-    linkage = sch.linkage(spd.squareform(distances),method='average')
+    linkage = sch.linkage(spd.squareform(distances),method='complete')
     df = pd.DataFrame(scores,columns=column_labels, index=row_labels)
 
     if len(df.columns) > 100:

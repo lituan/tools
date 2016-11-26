@@ -47,7 +47,7 @@ def BlueGreenYellow():
     my_cmap = mpl.colors.LinearSegmentedColormap('my_colormap',cdict,256)
     return my_cmap
 
-def heatmap(header,scores,file_name,method='average'):
+def heatmap(header,scores,file_name,method='complete'):
 
     scores = [map(lambda x: float(x)/100.0,row) for row in matrix]
     scores = np.array(scores)

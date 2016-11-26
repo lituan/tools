@@ -361,8 +361,8 @@ def importData(filename):
 
 def main():
     ################  Default Methods ################
-    row_method = 'single'
-    column_method = 'single'
+    row_method = 'complete'
+    column_method = 'complete'
     row_metric = 'euclidean'
     column_metric = 'euclidean'
     color_gradient = 'blue_green_yellow'
