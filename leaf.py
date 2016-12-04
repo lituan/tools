@@ -8,11 +8,13 @@ Simon Bull gives an implementation for python 3, hosted at https://github.com/Si
 this implementation is for python 2.7
 
 this script can read in a multiple alignment file in fasta format, compute pairwise similarities, and remove redundancy accordint to similarity cutoff
+you can choose to use igraph to plot the network
 usage python leaf.py test.fa
 """
 import sys
 import os
 import igraph
+import lt
 
 
 def read_msa(msa_f):
@@ -48,7 +50,7 @@ def get_pim(seqs):
         scores.append(score_i)
     return scores
 
-
+@lt.run_time
 def leaf(labels, similarities, cutoff, filename):
 
     matrix = [map(lambda x: 1 if x > cutoff else 0, row)
@@ -56,10 +58,11 @@ def leaf(labels, similarities, cutoff, filename):
     for i in range(len(matrix)):
         matrix[i][i] = 0
 
+    # use igraph to plot the initial network
     graph = igraph.Graph.Adjacency(matrix, mode='undirected')
     igraph.plot(graph, filename + '.png', vertex_label=labels)
 
-    adjlist = graph.get_adjlist()
+    adjlist = [[i for i in row if i] for row in matrix]
     neighbors = []
     remove = []
     # transform adjlist to set
@@ -94,16 +97,19 @@ def leaf(labels, similarities, cutoff, filename):
     # continue to remove the one with most neighbors until no vertex has
     # neighbors, removed vertex is not considered
     while max([len(r) for i, r in enumerate(neighbors) if not i in remove]) > 0:
+
         max_index = max([(len(r), i) for i, r in enumerate(neighbors)])[1]
         remove.append(max_index)
-        for i in range(len(neighbors)):
-            if i in neighbors[i]:
+        for i in set(range(len(neighbors))).difference(set(remove)): # do not compute remove vertex
+            if max_index in neighbors[i]:
                 neighbors[i].remove(max_index)
 
     nr_matrix = [matrix[i] for i in range(len(matrix)) if not i in remove]
     nr_matrix = [[row[i] for i in range(
         len(matrix)) if not i in remove] for row in nr_matrix]
     nr_labels = [labels[i] for i in range(len(matrix)) if not i in remove]
+
+    # plot non-redundant notwork
     graph = igraph.Graph.Adjacency(nr_matrix, mode='undirected')
     igraph.plot(graph, filename + '_nr.png', vertex_label=nr_labels)
 
@@ -115,7 +121,8 @@ def main():
     filename = os.path.splitext(os.path.split(sys.argv[-1])[1])[0]
     seqnames = [seq[0] for seq in seqs]
     similarities = get_pim(seqs)
-    leaf(seqnames, similarities, 0.9, filename)
+    for cutoff in [0.3,0.4,0.5,0.6,0.7,0.8,0.9,0.95]:
+        leaf(seqnames, similarities, 0.9, filename+'_'+str(cutoff))
 
 
 if __name__ == "__main__":
