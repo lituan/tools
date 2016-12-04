@@ -67,7 +67,7 @@ def align_seqs(seqs):
 def dbscan(scores,eps=0.1):
     distance = [map(lambda x: 1.0-x,row) for row in scores]
     from sklearn.cluster import DBSCAN
-    db = DBSCAN(eps=eps,metric='precomputed').fit(distance)
+    db = DBSCAN(eps=eps,min_samples=1,metric='precomputed').fit(distance)
     return db.labels_
 
 def cluster_pros(pros,scores,labels):
