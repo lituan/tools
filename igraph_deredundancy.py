@@ -3,6 +3,7 @@
 
 import os
 import sys
+import matplotlib.pyplot as plt
 import lt
 
 def read_msa(msa_f):
@@ -38,7 +39,7 @@ def get_pim(seqs):
     return scores
 
 @lt.run_time
-def igraph_mis(seqs,scores,cutoff,good_list=[],bad_list=[],no_bad=False):
+def igraph_mis(labels,scores,cutoff,filename,good_list=[],bad_list=[],no_bad=False):
     """
     use igraph to find maximal independent sets
     sort mis according to quality
@@ -53,7 +54,14 @@ def igraph_mis(seqs,scores,cutoff,good_list=[],bad_list=[],no_bad=False):
     # no circle
     for i in range(len(adj_m)):
         adj_m[i][i] = 0
-    graph = igraph.Graph.Adjacency(adj_m)
+    graph = igraph.Graph.Adjacency(adj_m,mode='undirected')
+
+    visual_style = {}
+    # visual_style['vertex_label'] = labels
+    # visual_style['vertex_label_size'] = 2
+    visual_style['layout'] = graph.layout('kk')
+    igraph.plot(graph,filename+'.png',**visual_style)
+
     mis = graph.independent_vertex_sets()
 
     total = len(labels)
@@ -74,13 +82,13 @@ def igraph_mis(seqs,scores,cutoff,good_list=[],bad_list=[],no_bad=False):
     nr_scores = [nr_scores[i] for i in mmis]
     return nr_seqs,nr_scores
 
-def plot_heatmap(seqs, scores,file_name):
+def plot_heatmap(labels, scores,file_name):
 
     if not len(scores) > 2:
         print 'number of seqs is too small'
         return
 
-    column_labels = [s[0] for s in seqs]
+    column_labels = labels
     row_labels = column_labels
     scores = [map(lambda x: float(x), row) for row in scores]
     scores = np.array(scores)
@@ -103,11 +111,13 @@ def plot_heatmap(seqs, scores,file_name):
 def main():
     cutoff = 0.9
     seqs = read_msa(sys.argv[-1])
+    filename = os.path.splitext(os.path.split(sys.argv[-1])[1])[0]
 
     scores = get_pim(seqs)
-    nr_seqs,nr_scores = igraph_mis(seqs,scores,cutoff)
+    labels = [s[0] for s in seqs]
+    nr_seqs,nr_scores = igraph_mis(seqs,scores,cutoff,filename)
 
-    plot_heatmap(nr_seqs,nr_scores,'nr_seqs_'+'_'+str(cutoff))
+    plot_heatmap(nr_seqs,nr_scores,filename+'_nr_seqs_'+'_'+str(cutoff))
 
     # write_msa(nr_seqs,'nr_seqs_'+str(cutoff))
 
