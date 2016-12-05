@@ -132,7 +132,12 @@ def leaf(labels, similarities, cutoff, filename):
     graph = igraph.Graph.Adjacency(nr_matrix, mode='undirected')
     igraph.plot(graph, filename + '_nr.png', vertex_label=nr_labels)
 
-    return nr_labels, nr_matrix
+    nr_similarities = [similarities[i] for i in range(len(similarities)) if not i in remove]
+    nr_similarities = [[row[i] for i in range(
+        len(similarities)) if not i in remove] for row in nr_similarities]
+    nr_labels = [labels[i] for i in range(len(similarities)) if not i in remove]
+
+    return nr_labels, nr_similarities
 
 
 def main():
