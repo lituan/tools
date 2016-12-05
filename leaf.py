@@ -60,11 +60,13 @@ def leaf(labels, similarities, cutoff, filename):
 
     # use igraph to plot the initial network
     graph = igraph.Graph.Adjacency(matrix, mode='undirected')
-    igraph.plot(graph, filename + '.png', vertex_label=labels)
+    igraph.plot(graph, filename + '.png', vertex_label=range(len(labels)))
 
-    adjlist = [[i for i in row if i] for row in matrix]
+    adjlist = [[i for i,n in enumerate(row ) if n] for row in matrix]
     neighbors = []
     remove = []
+    for i,a in enumerate(adjlist):
+        print '{0}:{1},'.format(i,a)
     # transform adjlist to set
     neighbors = [set(n) for i, n in enumerate(adjlist)]
     # detect possible max clique
@@ -78,36 +80,53 @@ def leaf(labels, similarities, cutoff, filename):
             if not i in remove:  # do not compute removed vertex
                 # a clique is set of vertex connecting to each other
                 nodesofinterest = neighbors[i].union([i])
+                print 'initial nodesofinterest: ',nodesofinterest
                 if set.intersection(*[neighbors[i].union([i]) for i in nodesofinterest]) == nodesofinterest:
+                    print 'clique nodesofinterest: ',nodesofinterest
                     # detect vertex without linking to outside vertex
                     in_clique = [i for i in nodesofinterest if not neighbors[
                         i].union([i]).difference(nodesofinterest)]
                     # keep one of the vertex without linking to outside vertex,
                     # remove rest
                     if in_clique:
+                        print 'in_clique: ',in_clique
                         keep = [in_clique[0]]
+                        print 'keep: ',keep
                         remove_iter = nodesofinterest.difference(set(keep))
+                        print 'remove_iter: ',remove_iter
                         for r in remove_iter:
                             if not r in remove:  # do not compute removed vertex
+                                print 'remove: ',r
                                 for i in range(len(neighbors)):
                                     if r in neighbors[i]:
                                         neighbors[i].remove(r)
                         remove += remove_iter
 
+    print 'after leaf: ',neighbors
+
+    nr_matrix = [matrix[i] for i in range(len(matrix)) if not i in remove]
+    nr_matrix = [[row[i] for i in range(
+        len(matrix)) if not i in remove] for row in nr_matrix]
+    graph = igraph.Graph.Adjacency(nr_matrix, mode='undirected')
+    nr_labels = [i for i in range(len(matrix)) if not i in remove]
+    igraph.plot(graph, filename + '_leaf.png', vertex_label=nr_labels)
     # continue to remove the one with most neighbors until no vertex has
     # neighbors, removed vertex is not considered
     while max([len(r) for i, r in enumerate(neighbors) if not i in remove]) > 0:
 
-        max_index = max([(len(r), i) for i, r in enumerate(neighbors)])[1]
+        max_index = max([(len(r), i) for i, r in enumerate(neighbors) if not i in remove])[1]
+        print 'remove: ',max_index
         remove.append(max_index)
         for i in set(range(len(neighbors))).difference(set(remove)): # do not compute remove vertex
             if max_index in neighbors[i]:
                 neighbors[i].remove(max_index)
 
+    print 'final remove: ',remove
+
     nr_matrix = [matrix[i] for i in range(len(matrix)) if not i in remove]
     nr_matrix = [[row[i] for i in range(
         len(matrix)) if not i in remove] for row in nr_matrix]
-    nr_labels = [labels[i] for i in range(len(matrix)) if not i in remove]
+    nr_labels = [i for i in range(len(matrix)) if not i in remove]
 
     # plot non-redundant notwork
     graph = igraph.Graph.Adjacency(nr_matrix, mode='undirected')
@@ -122,7 +141,8 @@ def main():
     seqnames = [seq[0] for seq in seqs]
     similarities = get_pim(seqs)
     for cutoff in [0.3,0.4,0.5,0.6,0.7,0.8,0.9,0.95]:
-        leaf(seqnames, similarities, 0.9, filename+'_'+str(cutoff))
+    # for cutoff in [0.8]:
+        leaf(seqnames, similarities, cutoff, filename+'_'+str(cutoff))
 
 
 if __name__ == "__main__":
