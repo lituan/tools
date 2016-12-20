@@ -220,6 +220,26 @@ def align_lis_lis(lis_lis):
     lis_lis = [[lis[i] for lis in aligned] for i in range(inner_lis_max_len)]
     return lis_lis
 
+def write_lis_lis(lis_lis,filename,cols=[]):
+    """align nested list to print a table"""
+    lis_lis = [[str(l) for l in lis]
+               for lis in lis_lis]  # trans every element to str
+    #make all inner lists of the same length
+    inner_lis_max_len = max(len(lis) for lis in lis_lis)
+    lis_lis = [lis + (inner_lis_max_len - len(lis)) * [''] for lis in lis_lis]
+    #make element in the same list have the same length
+    aligned = []
+    for lis in lis_lis:
+        width = max([len(l) for l in lis])
+        lis = [l + (width - len(l)) * ' ' for l in lis]
+        aligned.append(lis)
+    new_lis_lis = [';'.join([aligned[i][j] for i in range(len(aligned))]) for j in range(len(aligned[0]))]
+    with open(filename+'.txt','w') as w_f:
+        if cols:
+            print >> w_f,'\t;'.join(cols)
+        for l in new_lis_lis:
+            print >> w_f,l
+
 # a = [['dd','dddd'],['ddddd','dd']]
 # print align_lis_lis(a)
 # a = [['dd  ','dddd'],['ddddd','dd  ']]
@@ -249,4 +269,26 @@ def pickle_dump(obj,f_name):
 
 def pickle_load(obj_f):
     return pickle.load(open(obj_f,'r'))
+
+def pair_to_matrix(pair):
+    n = int((1+np.sqrt(len(pair)*8+1))/2.0)
+    matrix = np.ones((n,n))
+    for i in range(n):
+        i_shift = i*n-i*(i+1)/2
+        for j in range(n):
+            j_shift = j*n-j*(j+1)/2
+            if j > i:
+                matrix[i][j] = pair[j-i-1+i_shift]
+            if j < i:
+                matrix[i][j] = pair[i-j-1+j_shift]
+    return matrix
+
+def matrix_to_pair(matrix):
+    pair = []
+    n = len(matrix)
+    for i in range(n):
+        for j in range(n):
+            if j > i:
+                pair.append(matrix[i][j])
+    return pair
 
