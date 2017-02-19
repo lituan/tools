@@ -10,8 +10,8 @@ import numpy as np
 AA = ['A', 'R', 'N', 'D', 'C', 'Q', 'E', 'G', 'H', 'I', 'L', 'K',
       'M', 'F', 'P', 'S', 'T', 'W', 'Y', 'V']
 
-SEQ_LEN = 100
-SEQ_NUM = 100
+SEQ_LEN = 21
+SEQ_NUM = 10
 def random_seq(seqlen):
     seq = []
     for i in range(seqlen):
