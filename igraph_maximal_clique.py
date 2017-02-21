@@ -8,9 +8,9 @@ use igraph to find a group of sequences with pairwise identity in a certain rang
 import sys
 import os
 import igraph
-from multipleprocessing import Pool
+from multiprocessing import Pool
 from Bio import pairwise2
-from Bio.SubMat import MatrixInfo as matlist
+from Bio.SubsMat import MatrixInfo as matlist
 
 
 def align(seq1, seq2):
@@ -48,32 +48,39 @@ def get_pim(seqs):
         scores.append(score_i)
     return scores
 
-def igraph_mc(labels,scores,cutoff1=0.6,cutoff2=0.9):
-
+def igraph_mc(p):
+    print p[-1]
+    seqs,scores,fname,cutoff1,cutoff2 = p
     adj_m = [map(lambda x: 1 if cutoff1 < x < cutoff2 else 0,row) for row in scores]
     for i in range(len(adj_m)):
         adj_m[i][i] = 0
-    graph = igraph.Graph.Adjacency(adj_m,mode='undirected')
-    indexes = igraph.maximal_cliques()
-    mc_labels = [labels[i] for i in indexes[-1]]
-    return mc_labels
+    g = igraph.Graph.Adjacency(adj_m,mode='undirected')
+    igraph.plot(g,fname+'_igraph.png')
+    indexes = g.maximal_cliques()
+    for i,index in enumerate(indexes):
+        if len(index) > 10:
+            print index
+            mc_seqs = [seqs[j] for j in index]
+            with open(fname+'_'+str(i)+'.fa','w') as w_f:
+                for pro,seq in mc_seqs:
+                    print >> w_f,'>{0}'.format(pro)
+                    s = [seq[k:k+80] for k in range(0,len(seq),80)]
+                    for si in s:
+                        print >> w_f,si
 
 def main():
-    cutoff1 = 0.5
+    cutoff1 = 0.6
     cutoff2 = 0.9
     seqs = readfa(sys.argv[-1])
     scores = get_pim(seqs)
-    mc_labels = igraph_mc([seq[0] for seq in seqs],scores,cutoff1,cutoff2)
-    mc_seqs = [(pro,seq) for pro,seq in seqs if pro in mc_labels]
 
     fname = os.path.split(sys.argv[-1])[1].split('.')[0]
-    fname = fname+'_mc_seqs_'+str(cutoff1)+'_'+str(cutoff2)
-    with open(fname+'.fa','w') as w_f:
-        for pro,seq in mc_seqs:
-            print >> w_f,'>{0}'.format(pro)
-            seqs = [seq[i:i+80] for i in range(0,len(seq),80)]
-            for s in seqs:
-                print >> w_f,s
+
+    parameters = [[seqs,scores,fname+'_mc_seqs_'+str(cutoff1)+'_'+str(cutoff2),cutoff1,cutoff2] for cutoff1 in [0.3,0.4,0.5,0.6,0.7,0.8]]
+
+    p = Pool(6)
+    p.map(igraph_mc,parameters)
+    p.close()
 
 if __name__ == "__main__":
     main()
