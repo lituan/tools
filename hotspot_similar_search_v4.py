@@ -29,7 +29,7 @@ from matplotlib.patches import PathPatch
 from svgpath2mpl import parse_path
 from xml.dom import minidom
 
-
+from multiprocessing import Pool
 from wdsp import Wdsp
 
 
@@ -118,19 +118,13 @@ def align_hot(hot1,hot2):
     return identity
 
 def align_hots(hots):
-    scores = []
+    score = []
     hots_len = len(hots)
     for i in range(hots_len):
-        score_i = []
         for j in range(hots_len):
-            if j < i:
-                score_i.append(scores[j][i])
-            elif j == i:
-                score_i.append(1.0)
-            elif j > i:
-                score_i.append(align_hot(hots[i],hots[j]))
-        scores.append(score_i)
-    return scores
+            if j > i:
+                score.append(align_hot(hots[i],hots[j]))
+    return score
 
 def align_seq(seq1, seq2):
     from Bio import pairwise2
@@ -149,19 +143,13 @@ def align_seq(seq1, seq2):
     return identity
 
 def align_seqs(seqs):
-    scores = []
+    score = []
     seqs_len = len(seqs)
     for i in range(seqs_len):
-        score_i = []
         for j in range(seqs_len):
             if j > i:
-                score_i.append(align_seq(seqs[i],seqs[j]))
-            elif j == i:
-                score_i.append(1.0)
-            if j < i:
-                score_i.append(scores[j][i])
-        scores.append(score_i)
-    return scores
+                score.append(align_seq(seqs[i],seqs[j]))
+    return score
 
 def get_similar_hots(tem_hots, all_hots, cutoff=0):
     tem_all_hots = {}
@@ -319,138 +307,34 @@ def adjust_hots(hots):
     return new_hots
 
 
-def leaf(labels, similarities, cutoff):
-
-    matrix = [map(lambda x: 1 if x > cutoff else 0, row)
-              for row in similarities]
-    for i in range(len(matrix)):
-        matrix[i][i] = 0
-
-    adjlist = [[i for i,n in enumerate(row ) if n] for row in matrix]
-    neighbors = []
-    remove = []
-    for i,a in enumerate(adjlist):
-        print '{0}:{1},'.format(i,a)
-    # transform adjlist to set
-    neighbors = [set(n) for i, n in enumerate(adjlist)]
-    # detect possible max clique
-    max_neighbors = max(len(l) for l in neighbors)
-    # the possible clique size is 2 to max_neighbors+1, so the possible
-    # neighborsize is 1 to max_neighbors
-    for clique_num in range(1, max_neighbors + 1):
-        nodes_index = set([i for i, l in enumerate(
-            neighbors) if len(l) == clique_num])
-        for i in nodes_index:
-            if not i in remove:  # do not compute removed vertex
-                # a clique is set of vertex connecting to each other
-                nodesofinterest = neighbors[i].union([i])
-                if set.intersection(*[neighbors[i].union([i]) for i in nodesofinterest]) == nodesofinterest:
-                    # detect vertex without linking to outside vertex
-                    in_clique = [i for i in nodesofinterest if not neighbors[
-                        i].union([i]).difference(nodesofinterest)]
-                    # keep one of the vertex without linking to outside vertex,
-                    # remove rest
-                    if in_clique:
-                        keep = [in_clique[0]]
-                        remove_iter = nodesofinterest.difference(set(keep))
-                        for r in remove_iter:
-                            if not r in remove:  # do not compute removed vertex
-                                for i in range(len(neighbors)):
-                                    if r in neighbors[i]:
-                                        neighbors[i].remove(r)
-                        remove += remove_iter
-
-    nr_matrix = [matrix[i] for i in range(len(matrix)) if not i in remove]
-    nr_matrix = [[row[i] for i in range(
-        len(matrix)) if not i in remove] for row in nr_matrix]
-    graph = igraph.Graph.Adjacency(nr_matrix, mode='undirected')
-    nr_labels = [i for i in range(len(matrix)) if not i in remove]
-    igraph.plot(graph, filename + '_leaf.png', vertex_label=nr_labels)
-    # continue to remove the one with most neighbors until no vertex has
-    # neighbors, removed vertex is not considered
-    while max([len(r) for i, r in enumerate(neighbors) if not i in remove]) > 0:
-
-        max_index = max([(len(r), i) for i, r in enumerate(neighbors) if not i in remove])[1]
-        remove.append(max_index)
-        for i in set(range(len(neighbors))).difference(set(remove)): # do not compute remove vertex
-            if max_index in neighbors[i]:
-                neighbors[i].remove(max_index)
-
-    nr_matrix = [matrix[i] for i in range(len(matrix)) if not i in remove]
-    nr_matrix = [[row[i] for i in range(
-        len(matrix)) if not i in remove] for row in nr_matrix]
-    nr_labels = [i for i in range(len(matrix)) if not i in remove]
-
-    nr_similarities = [similarities[i] for i in range(len(similarities)) if not i in remove]
-    nr_similarities = [[row[i] for i in range(
-        len(similarities)) if not i in remove] for row in nr_similarities]
-    nr_labels = [labels[i] for i in range(len(similarities)) if not i in remove]
-
-    return nr_labels, nr_similarities
-
-def pair_to_matrix(pair):
-    n = int((1+np.sqrt(len(pair)*8+1))/2.0)
-    matrix = np.ones((n,n))
-    for i in range(n):
-        i_shift = i*n-i*(i+1)/2
-        for j in range(n):
-            j_shift = j*n-j*(j+1)/2
-            if j > i:
-                matrix[i][j] = pair[j-i-1+i_shift]
-            if j < i:
-                matrix[i][j] = pair[i-j-1+j_shift]
-    return matrix
-
-def matrix_to_pair(matrix):
-    pair = []
-    n = len(matrix)
-    for i in range(n):
-        for j in range(n):
-            if j > i:
-                pair.append(matrix[i][j])
-    return pair
-
-
-import lt
-@lt.run_time
-def main():
-
-    with open(sys.argv[-2]) as wdsp_f:
-        tem_wdsp = Wdsp(wdsp_f)
-        tem_hots = tem_wdsp.hotspots
-        with open(sys.argv[-1]) as wdsp_f:
-            all_wdsp = Wdsp(wdsp_f)
-            all_hots = all_wdsp.hotspots
-
-
-    cutoff = 0.8
-    # for cutoff in [30,40,50,60,70,80,90]:
+def single_fun(cutoff):
     tem_all_hots = get_similar_hots(tem_hots, all_hots,cutoff)
     for tem_pro, all_pros in tem_all_hots.iteritems():
-        if len(all_pros) > 5:
-            hots = [[pro,all_hots[pro]] for pro,_ in all_pros]
-            hots_len = len(hots)
-            filename = str(hots_len)+'_'+tem_pro+'_'+str(cutoff)
+        hots = [[pro,all_hots[pro]] for pro,_ in all_pros]
+        seqs = [[pro,all_wdsp.seqs[pro]] for pro,_ in all_pros]
+        hots_score = align_hots([hot[1] for hot in hots])
+        seqs_score = align_seqs([seq[1] for seq in seqs])
+        plot_scatter(seqs_score,hots_score,tem_pro+'_'+str(cutoff))
 
-            seqs = [[pro,all_wdsp.seqs[pro]] for pro,_ in all_pros]
-            hots_score = align_hots([hot[1] for hot in hots])
-            seqs_score = align_seqs([seq[1] for seq in seqs])
-            seq_names = [seq[0] for seq in seqs]
-            nr_seq_names,nr_seqs_score = leaf(seq_names,seqs_score,cutoff)
-            nr_index = [i for i,seq in enumerate(seqs) if seq[0] in nr_seq_names]
-            nr_hots = [[pro,hot] for pro,hot in hots if pro in nr_seq_names]
-            nr_hots_score = [score for i,score in enumerate(hots_score) if i in nr_index]
-            nr_hots_score = [[s for i,s in enumerate(score) if i in nr_index] for score in nr_hots_score]
+        hots = adjust_hots(hots)
+        hots_len = len(hots)
+        hots = [(pro,''.join(hot)) for pro,hot in hots]
+        plotlogo(hots,str(hots_len)+'_'+tem_pro+'_'+str(cutoff))
 
-            nr_hots_score_pair = matrix_to_pair(nr_hots_score)
-            nr_seqs_score_pair = matrix_to_pair(nr_seqs_score)
-            plot_scatter(nr_seqs_score_pair,nr_hots_score_pair,filename+'_scatter')
+with open(sys.argv[-2]) as wdsp_f:
+    tem_wdsp = Wdsp(wdsp_f)
+    tem_hots = tem_wdsp.hotspots
+    with open(sys.argv[-1]) as wdsp_f:
+        all_wdsp = Wdsp(wdsp_f)
+        all_hots = all_wdsp.hotspots
 
-            hots = adjust_hots(nr_hots)
-            hots = [(pro,''.join(hot)) for pro,hot in nr_hots]
-            plotlogo(hots,filename+'_logo')
-
+def main():
+    cutoffs = [0.5,0.6,0.7,0.8]
+    p = Pool(4)
+    p.map(single_fun,cutoffs)
+    p.close()
 
 if __name__ == "__main__":
     main()
+    # freeze_support()
 
