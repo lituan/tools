@@ -11,6 +11,17 @@ import igraph
 from multiprocessing import Pool
 from Bio import pairwise2
 from Bio.SubsMat import MatrixInfo as matlist
+from wdsp import Wdsp
+
+
+def readfa(fa_f):
+    with open(fa_f) as o_f:
+        lines = o_f.readlines()
+        lines = [line.rstrip('\r\n') for line in lines]
+        begin = [i for i,line in enumerate(lines) if '>' in line]
+        seqs = [lines[b:e] for b,e in zip(begin,begin[1:]+[len(lines)])]
+        seqs = [(seq[0][1:],''.join(seq[1:])) for seq in seqs]
+        return seqs
 
 
 def align(seq1, seq2):
@@ -24,14 +35,6 @@ def align(seq1, seq2):
     identity = 1.0 * len(identity)/ len(seq1)
     return float('{0:<4.2f}'.format(identity))
 
-def readfa(fa_f):
-    with open(fa_f) as o_f:
-        lines = o_f.readlines()
-        lines = [line.rstrip('\r\n') for line in lines]
-        begin = [i for i,line in enumerate(lines) if '>' in line]
-        seqs = [lines[b:e] for b,e in zip(begin,begin[1:]+[len(lines)])]
-        seqs = [(seq[0][1:],''.join(seq[1:])) for seq in seqs]
-        return seqs
 
 def get_pim(seqs):
     scores = []
@@ -65,13 +68,16 @@ def main():
     cutoff1 = 0.6
     cutoff2 = 0.9
     mc_cutoff = 10 # cutoff for size of clique
-    seqs = readfa(sys.argv[-1])
-    labels = [pro for pro,_ in seqs]
-    scores = get_pim(seqs)
+
+    with open(sys.argv[-1]) as o_f:
+        w = Wdsp(o_f)
+        seqs = [(pro,seq) for pro,seq in w.seqs.iteritems()]
+        labels = [pro for pro,_ in seqs]
+        scores = get_pim(seqs)
 
     fname = os.path.split(sys.argv[-1])[1].split('.')[0]
 
-    parameters = [[labels,scores,fname+'_mc_seqs_'+str(cutoff1)+'_'+str(cutoff2),cutoff1,cutoff2,mc_cutoff] for cutoff1 in [0.3,0.4,0.5,0.6,0.7,0.8]]
+    parameters = [[labels,scores,fname+str(cutoff1)+'_'+str(cutoff2),cutoff1,cutoff2,mc_cutoff] for cutoff1 in [0.3,0.4,0.5,0.6,0.7,0.8]]
 
     p = Pool(6)
     results = p.map(igraph_mc,parameters)
@@ -90,6 +96,14 @@ def main():
                         s = [seq[k:k+80] for k in range(0,len(seq),80)]
                         for si in s:
                             print >> w_f,si
+                filename = os.path.join(fname,fname+'_mc_'+str(i)+'.wdsp')
+                with open(filename,'w') as w_f:
+                    for pro in mc_label:
+                        wdsp = w.wdsps[pro]
+                        for line in wdsp:
+                            print >> w_f,line
+
+
 if __name__ == "__main__":
     main()
 
