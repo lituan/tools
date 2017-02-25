@@ -37,9 +37,10 @@ def get_similarity(seqs):
             if j < i:
                 score_i.append(scores[j][i])
             elif j > i:
-                scores.append(pim(seqs[i][1],seqs[j][1]))
+                score_i.append(pim(seqs[i][1],seqs[j][1]))
             else:
                 score_i.append(1.0)
+        socres.append(score_i)
     return scores
 
 def igraph_mc(p):
