@@ -22,7 +22,7 @@ def filter_pdb(pdbids,cutoff=3.0):
 
     url = 'http://www.rcsb.org/pdb/rest/customReport.csv?'
     data = {
-        'pdbids':pdbids,
+        'pdbids':','.join(pdbids),
         'customReportColumns':'structureId,uniprotAcc,entityId,resolution,chainLength,releaseDate',
         'service':'wsfile',
         'format':'csv',
@@ -82,6 +82,8 @@ def rcsb_phos(p):
     response = urllib2.urlopen(req)
     pdbids = response.read()
     pdbids = pdbids.replace('\n',',')
+    pdbids = pdbids.split(',')
+    pdbids = [p for p in pdbids if p]
     return (phos_type,poly_type,pdbids)
 
 def check_pdb_status(pdbid):
@@ -151,7 +153,7 @@ def main():
         parameters = []
         for phosi,polyi,pdbids in r:
             if pdbids:
-                pdbids = filter_pdb(','.join(pdbids),resolution_cutoff)
+                pdbids = filter_pdb(pdbids,resolution_cutoff)
                 if pdbids:
                     for p in pdbids:
                         if not p in current_got_pdbids:
@@ -160,7 +162,7 @@ def main():
         if not parameters:
             break
 
-        p = Pool(4)
+        p = Pool(8)
         r = p.map(fetch_pdb,parameters)
         p.close()
 
