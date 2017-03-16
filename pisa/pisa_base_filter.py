@@ -106,6 +106,19 @@ def filter_small_interface(pdb_interfaces,cutoff):
     print 'after filter small interface',len(big_pdb_interfaces)
     return big_pdb_interfaces
 
+def filter_unstable_assembly(pdb_interfaces):
+    stable_interfaces = pickle.load(open('stable_pdb_interfaces.pickle'))
+    stable_pdb_if = []
+    for pdbid,interfaces in stable_interfaces.iteritems():
+        for i in interfaces:
+            stable_pdb_if.append(pdbid.upper()+i)
+    stable_pdb_interfaces = [p for p in pdb_interfaces if p[0].upper()+p[1] in stable_pdb_if]
+    unstable_pdb_interfaces = [p for p in pdb_interfaces if not p[0].upper()+p[1] in stable_pdb_if]
+
+    write_pdb_interfaces(unstable_pdb_interfaces,'unstable')
+
+    print 'after filter unstable assembly',len(stable_pdb_interfaces)
+    return stable_pdb_interfaces
 
 def get_pdb_chain_pfam(p):
     pdbid,inter_id,inter_chain,inter_res = p
@@ -139,7 +152,7 @@ def get_pdb_chain_pfam(p):
                 inter_pfam = acc
     return pdbid,inter_id,inter_pfam
 
-def filter_kinae(pdb_interfaces):
+def filter_kinase(pdb_interfaces):
 
     KINASE = ['PF00069']
     phos_inter = []
@@ -184,6 +197,8 @@ def filter_kinae(pdb_interfaces):
     return non_kinae_pdb_interfaces
 
 
+
+
 def main():
     interface_cutoff = 400
     resolution_cutoff = 3.0
@@ -199,17 +214,18 @@ def main():
     # write_pdb_interfaces(pdb_interfaces,'1filter_non_pro')
 
     pdb_interfaces = filter_non_phos(pdb_interfaces)
-    write_pdb_interfaces(pdb_interfaces,'3filter_non_phos')
-
-    pdb_interfaces = filter_symmety(pdb_interfaces)
-    write_pdb_interfaces(pdb_interfaces,'4filter_symmety')
-
+    # write_pdb_interfaces(pdb_interfaces,'3filter_non_phos')
 
     pdb_interfaces = filter_small_interface(pdb_interfaces,interface_cutoff)
-    write_pdb_interfaces(pdb_interfaces,'5filter_small')
+    # write_pdb_interfaces(pdb_interfaces,'5filter_small')
+
+    pdb_interfaces = filter_unstable_assembly(pdb_interfaces)
+    # write_pdb_interfaces(pdb_interfaces,'4filter_unstable')
 
     pdb_interfaces = filter_kinase(pdb_interfaces)
-    write_pdb_interfaces(pdb_interfaces,'6filter_kinase')
+    # write_pdb_interfaces(pdb_interfaces,'6filter_kinase')
+
+    write_pdb_interfaces(pdb_interfaces,'base_filter')
 
 if __name__ == "__main__":
     main()

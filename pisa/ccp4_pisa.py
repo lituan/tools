@@ -33,10 +33,14 @@ def pisa(f):
         os.makedirs('detail')
     if not os.path.exists('interface_xml'):
         os.makedirs('interface_xml')
+    if not os.path.exists('assemble_xml'):
+        os.makedirs('assemble_xml')
     pdbid = f[-8:-4].lower()
-    # subprocess.call(['pisa',pdbid,'-analyse',f])
-    # xml_fname = os.path.join('interface_xml',pdbid+'_inteface.xml')
-    # subprocess.call(['pisa',pdbid,'-xml','interfaces','>',xml_fname],shell=True)
+    subprocess.call(['pisa',pdbid,'-analyse',f])
+    interface_xml_fname = os.path.join('interface_xml',pdbid+'_inteface.xml')
+    assemble_xml_fname = os.path.join('assemble_xml',pdbid+'_assemble.xml')
+    subprocess.call(['pisa',pdbid,'-xml','interfaces','>',interface_xml_fname],shell=True)
+    subprocess.call(['pisa',pdbid,'-xml','assemblies','>',assemble_xml_fname],shell=True)
         # output = subprocess.check_output(['pisa',pdbid,'-detail','interfaces',str(interface_num)],shell=True)
 
     for interface_num in range(100,200):

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-get phos_binding residues and its interacting residues
+check interface of same chain
 """
 
 import os
@@ -23,7 +23,6 @@ def select_phos_site(pdb_interfaces):
             bond_type,bond_info = bond
             for bondi in bond_info:
                 res1,res2,dist = bondi
-
                 if [p for p in PHOS if res1[-8:] == p]:
                     res1 = '_'.join(res1.split('_')[:3])
                     if not res1 in phos_interacting_residues.keys():
@@ -36,7 +35,6 @@ def select_phos_site(pdb_interfaces):
                         phos_interacting_residues[res2] = [(bondi[1],res1)]
                     else:
                         phos_interacting_residues[res2].append((bondi[1],res1))
-
         for phos,interacting_residues in phos_interacting_residues.items():
             try:
                 phos_chain = [c for c in chains if c[0] == phos.split('_')[0]][0]
@@ -49,6 +47,7 @@ def select_phos_site(pdb_interfaces):
                 print phos
                 print interacting_residues
                 continue
+
     return pdb_phos_sites
 
 def main():
@@ -57,10 +56,14 @@ def main():
     pdb_interfaces = pickle.load(open(sys.argv[-1]))
     pdb_phos_sites = select_phos_site(pdb_interfaces)
 
-    pickle.dump(pdb_phos_sites,open(fname+'_phos_sites.pickle','w'))
-    with open(fname+'_phos_sites.txt','w') as w_f:
-        for site in pdb_phos_sites:
+
+    same_chain_pdb_phos_sites = [p for p in pdb_phos_sites if p[-2][0] == p[-1][0]]
+
+    pickle.dump(same_chain_pdb_phos_sites,open(fname+'_phos_sites_same_chain.pickle','w'))
+    with open(fname+'_phos_sites_same_chain.txt','w') as w_f:
+        for site in same_chain_pdb_phos_sites:
             print >> w_f,'{0:<6}{1:<6}{2:<8.2f}{3:<8.2f}{4:<6.2f}{5:<8.2f}{6:<16}{7:<6}\t{8:<}\t{9:<}\t{10:<}'.format(site[0],site[1],site[2],site[3],site[4],site[5],site[6],site[7],site[8],site[9][:4],site[10][:4])
+
 
     # for i in range(1,20):
         # phos_sites = [p for p in pdb_phos_sites if len(p[8]) == i ]
