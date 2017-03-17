@@ -55,13 +55,13 @@ def get_all_pfam(pdb_phos_sites):
     for p in pdb_phos_sites:
         phos_inter.append((p[0],p[1],p[-1][0],[r[1] for r in p[-3]]))
 
-    # p = Pool(4)
-    # result = p.map(get_pdb_chain_pfam,phos_inter)
-    # p.close()
+    p = Pool(4)
+    result = p.map(get_pdb_chain_pfam,phos_inter)
+    p.close()
 
-    result = []
-    for p in phos_inter:
-        result.append(get_pdb_chain_pfam(p))
+    # result = []
+    # for p in phos_inter:
+        # result.append(get_pdb_chain_pfam(p))
 
     pickle.dump(result,open('pfam_result.pickle','w'))
 
@@ -72,14 +72,18 @@ def main():
 
     fname = '.'.join(os.path.split(sys.argv[-1])[1].split('.')[:-1])
     pdb_phos_sites = pickle.load(open(sys.argv[-1]))
+    print 'num of phos sites',len(pdb_phos_sites)
 
     pfam_result = get_all_pfam(pdb_phos_sites)
 
     all_pfams = []
     for r in pfam_result:
         if r[2]:
+            pfam_c = []
             for p in r[2]:
-                all_pfams.append(p[1])
+                pfam_c.append(p[1])
+            pfam_c = Counter(pfam_c).most_common()[0][0]
+            all_pfams.append(pfam_c)
     all_pfams_counter =  Counter(all_pfams)
 
     all_pfams_counter = [(k,v) for k,v in all_pfams_counter.iteritems()]

@@ -37,12 +37,13 @@ def pattern_plot(phos_patterns,fname):
         aa.append(a)
         count.append(c)
 
-    df = pd.DataFrame({'AA':aa,'Freq':count})
-    df = df.sort_values('Freq',ascending=False)
+    df = pd.DataFrame({'Amino Acids':aa,'Frequency':count})
+    df = df.sort_values('Frequency',ascending=False)
     f,ax = plt.subplots()
     sns.set_style('whitegrid')
     sns.set_palette('pastel')
-    sns.barplot(x='AA',y='Freq',data=df)
+    sns.barplot(x='Amino Acids',y='Frequency',data=df)
+    ax.set(xlabel='Amino Acids',ylabel='Frequency')
     plt.savefig(fname+'_aa_freq.png',dpi=300)
 
     # plot amino acid combination freq
@@ -55,15 +56,40 @@ def pattern_plot(phos_patterns,fname):
         pattern.append(p)
         count.append(c)
 
+    pattern_freq = [(p,c) for p,c in zip(pattern,count)]
+
     pattern_num = len(pattern)
-    df = pd.DataFrame({'Pattern':pattern,'Freq':count})
-    df = df.sort_values('Freq',ascending=False)
+    df = pd.DataFrame({'Patterns':pattern,'Frequency':count})
+    df = df.sort_values('Frequency',ascending=False)
     f,ax = plt.subplots(figsize=(8,pattern_num*0.5))
     sns.set_style('whitegrid')
     sns.set_palette('pastel')
-    sns.barplot(y='Pattern',x='Freq',data=df)
+    sns.barplot(y='Patterns',x='Frequency',data=df)
+    ax.set(xlabel='Frequency',ylabel='Patterns')
     plt.savefig(fname+'_pattern_freq.png',dpi=300)
 
+    with open(fname+'_pattern_freq.txt','w') as w_f:
+        for i in df.index:
+            print >> w_f,'{0:<15}{1:<}'.format(df.ix[i].Patterns,df.ix[i].Frequency)
+
+    min_pattern = min([len(p[0]) for p in pattern_freq])
+    max_pattern = max([len(p[0]) for p in pattern_freq])
+    with open(fname+'_pattern_freq_num.txt','w') as w_f:
+        for i in range(min_pattern,max_pattern+1):
+            patterni = [p for p in pattern_freq if len(p[0]) == i]
+            patterni = sorted(patterni,key=lambda x: x[1],reverse=True)
+            for p in patterni:
+                print >> w_f,'{0:<15}{1:<}'.format(p[0],p[1])
+
+            df = pd.DataFrame({'Patterns':[p[0] for p in patterni],'Frequency':[p[1] for p in patterni]})
+            df = df.sort_values('Frequency',ascending=False)
+            f,ax = plt.subplots()
+            sns.set_style('whitegrid')
+            sns.set_palette('pastel')
+            sns.barplot(y='Patterns',x='Frequency',data=df)
+            ax.set(xlabel='Frequency',ylabel='Patterns')
+            plt.savefig(fname+'_pattern_freq_'+str(i)+'.png',dpi=300)
+            plt.close('all')
 
 def write_phos_patterns(phos_patterns,fname):
     with open(fname+'_patterns.txt','w') as w_f:
