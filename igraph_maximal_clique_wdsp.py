@@ -97,8 +97,9 @@ def igraph_mc(p):
         adj_m[i][i] = 0
     g = igraph.Graph.Adjacency(adj_m,mode='undirected')
     igraph.plot(g,fname+'_igraph.png')
-    indexes = g.maximal_cliques()
-    mc_labels = [[labels[i] for i in index] for index in indexes if len(index) > mc_cutoff]
+    # indexes = g.maximal_cliques(mc_cutoff)
+    indexes = g.largest_cliques()
+    mc_labels = [[labels[i] for i in index] for index in indexes ]
     print fname,'\t',len(mc_labels)
     return [fname,mc_labels]
 
