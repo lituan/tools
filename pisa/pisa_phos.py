@@ -49,6 +49,8 @@ def select_phos_site(pdb_interfaces):
                 print phos
                 print interacting_residues
                 continue
+
+    print 'num of phos sites',len(pdb_phos_sites)
     return pdb_phos_sites
 
 def main():

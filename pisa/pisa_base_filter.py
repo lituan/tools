@@ -127,7 +127,7 @@ def get_pdb_chain_pfam(p):
     url = 'http://www.rcsb.org/pdb/rest/customReport.csv?'
     data = {
         'pdbids':pdbid,
-        'customReportColumns':'structureId,pfamAccession',
+        'customReportColumns':'structureId,entityId,pfamAccession,pfamId',
         'service':'wsfile',
         'format':'csv',
     }
@@ -139,22 +139,24 @@ def get_pdb_chain_pfam(p):
     lines = [line for line in lines if line]
     lines = [line.split(',') for line in lines]
     lines = [[w.strip('"') for w in line] for line in lines]
-    pfam = [line[2] for line in lines if line[1] == inter_chain][0]
+    inter_chain_id = [line for line in lines if line[1] == inter_chain][0][2]
 
-    inter_pfam = ''
+    pfam = [(line[3],line[4]) for line in lines if line[2] == inter_chain_id if line[3]]
+
+    inter_pfam = []
     if pfam:
-        pfams = pfam.split('#')
-        for f in pfams:
-            acc,res_range = f.split()
+        pfam_accs,pfam_ids = pfam[0]
+        for pfam_a,pfam_i in zip(pfam_accs.split('#'),pfam_ids.split('#')):
+            acc,res_range = pfam_a.split()
             res_range = res_range.strip('[]').split('-')
             res_range = map(int,res_range)
-            if min(inter_res_num) > min(res_range) and max(inter_res_num) < max(res_range):
-                inter_pfam = acc
+            for res_num in inter_res_num:
+                if res_num >= min(res_range) and res_num <= max(res_range):
+                    inter_pfam.append((acc,pfam_i))
     return pdbid,inter_id,inter_pfam
 
 def filter_kinase(pdb_interfaces):
 
-    KINASE = ['PF00069']
     phos_inter = []
     for interface in pdb_interfaces:
         pdbid,p1,interface_area,p2,p3,p4,bonds = interface[:7]
@@ -186,8 +188,13 @@ def filter_kinase(pdb_interfaces):
     result = p.map(get_pdb_chain_pfam,phos_inter)
     p.close()
 
-    non_kinase_result = [(r[0],r[1]) for r in result if not r[2] in KINASE]
-    kinase_result = [(r[0],r[1]) for r in result if r[2] in KINASE]
+    # result = []
+    # for p in phos_inter:
+        # result.append(get_pdb_chain_pfam(p))
+
+    result = [(r[0],r[1],'-'.join([ri[1] for ri in r[2]])) for r in result if r[2]]
+    non_kinase_result = [(r[0],r[1]) for r in result if not 'kinase' in r[2].lower()]
+    kinase_result = [(r[0],r[1]) for r in result if 'kinase' in r[2].lower()]
 
     non_kinae_pdb_interfaces = [p for p in pdb_interfaces if (p[0],p[1]) in non_kinase_result]
     kinae_pdb_interfaces = [p for p in pdb_interfaces if (p[0],p[1]) in kinase_result]
