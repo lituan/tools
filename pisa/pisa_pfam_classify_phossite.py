@@ -46,7 +46,7 @@ def get_pdb_chain_pfam(p):
             for res_num in inter_res_num:
                 if res_num >= min(res_range) and res_num <= max(res_range):
                     inter_pfam.append((acc,pfam_i))
-    return pdbid,inter_id,inter_pfam
+    return pdbid,inter_id,inter_res,inter_pfam
 
 def get_all_pfam(pdb_phos_sites):
 
@@ -58,12 +58,6 @@ def get_all_pfam(pdb_phos_sites):
     p = Pool(4)
     result = p.map(get_pdb_chain_pfam,phos_inter)
     p.close()
-
-    # result = []
-    # for p in phos_inter:
-        # result.append(get_pdb_chain_pfam(p))
-
-    pickle.dump(result,open('pfam_result.pickle','w'))
 
     return result
 
@@ -78,14 +72,12 @@ def main():
 
     all_pfams = []
     for r in pfam_result:
-        if r[2]:
-            pfam_c = []
-            for p in r[2]:
-                pfam_c.append(p[1])
-            pfam_c = Counter(pfam_c).most_common()[0][0]
-            all_pfams.append(pfam_c)
-    all_pfams_counter =  Counter(all_pfams)
+        pdbid,inter_id,inter_res,inter_pfam = r
+        inter_pfam = set([p[1] for p in inter_pfam])
+        inter_pfam = '-'.join(list(inter_pfam))
+        all_pfams.append((pdbid,inter_id,inter_res,inter_pfam))
 
+    all_pfams_counter =  Counter([p[2] for p in all_pfams])
     all_pfams_counter = [(k,v) for k,v in all_pfams_counter.iteritems()]
     all_pfams_counter = sorted(all_pfams_counter,key=lambda x: x[1],reverse=True)
 

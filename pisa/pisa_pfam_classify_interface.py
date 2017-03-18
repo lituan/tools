@@ -46,7 +46,7 @@ def get_pdb_chain_pfam(p):
             for res_num in inter_res_num:
                 if res_num >= min(res_range) and res_num <= max(res_range):
                     inter_pfam.append((acc,pfam_i))
-    return pdbid,inter_id,inter_pfam
+    return pdbid,inter_id,inter_res,inter_pfam
 
 def get_all_pfam(pdb_interfaces):
 
@@ -77,36 +77,12 @@ def get_all_pfam(pdb_interfaces):
             inter_chain = interacting_residues[0].split('_')[0]
             phos_inter.append([pdbid,p1,inter_chain,interacting_residues])
 
-    # p = Pool(4)
-    # result = p.map(get_pdb_chain_pfam,phos_inter)
-    # p.close()
-
-    # result = []
-    # for p in phos_inter:
-        # result.append(get_pdb_chain_pfam(p))
-
-    # pickle.dump(result,open('pfam_result.pickle','w'))
-    result = pickle.load(open('pfam_result.pickle'))
+    p = Pool(4)
+    result = p.map(get_pdb_chain_pfam,phos_inter)
+    p.close()
 
     return result
 
-    all_pfams = []
-    for r in result:
-        if r[2]:
-            for p in r[2]:
-                all_pfams.append(p[1])
-    all_pfams_counter =  Counter(all_pfams)
-    print all_pfams_counter
-    all_pfams_counter = [(k,v) for k,v in all_pfams_counter.iteritems()]
-    all_pfams_counter = sorted(all_pfams_counter,key=lambda x: x[1],reverse=True)
-    print all_pfams_counter
-    with open('pfams.txt','w') as w_f:
-        for c in all_pfams_counter:
-            print >> w_f,'{0:<30}{1:<}'.format(c[0],c[1])
-
-    with open('pfam_result.txt','w') as w_f:
-        for r in result:
-            print >> w_f,r
 
 
 def main():
@@ -118,10 +94,12 @@ def main():
 
     all_pfams = []
     for r in pfam_result:
-        if r[2]:
-            for p in r[2]:
-                all_pfams.append(p[1])
-    all_pfams_counter =  Counter(all_pfams)
+        pdbid,inter_id,inter_res,inter_pfam = r
+        inter_pfam = set([p[1] for p in inter_pfam])
+        inter_pfam = '-'.join(list(inter_pfam))
+        all_pfams.append((pdbid,inter_id,inter_res,inter_pfam))
+
+    all_pfams_counter =  Counter([p[2] for p in all_pfams])
 
     all_pfams_counter = [(k,v) for k,v in all_pfams_counter.iteritems()]
     all_pfams_counter = sorted(all_pfams_counter,key=lambda x: x[1],reverse=True)
