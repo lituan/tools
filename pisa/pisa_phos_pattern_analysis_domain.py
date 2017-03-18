@@ -173,9 +173,9 @@ def main():
             phos_sites = [(p[0],p[6],set(['_'.join(pi[1].split('_')[:3]) for pi in p[8]])) for p in domain_phos_sites]
 
             phos_patterns = [(pdb,lig,[r.split('_')[2] for r in res]) for pdb,lig,res in phos_sites]
-            write_phos_patterns(phos_patterns,fname+'_'+domain+'_phos_patterns')
+            write_phos_patterns(phos_patterns,fname+'_'+domain)
 
-            # pattern_plot(phos_patterns,fname)
+            pattern_plot(phos_patterns,fname+'_'+domain)
 
             # tpo_patterns = [(pdb,lig,p) for pdb,lig,p in phos_patterns if lig == 'TPO']
             # pattern_plot(tpo_patterns,fname+'_TPO')
