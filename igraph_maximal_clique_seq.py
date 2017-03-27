@@ -2,12 +2,17 @@
 # -*- coding: utf-8 -*-
 """
 for a group of sequences,calculate pairwise identity
-use igraph to find a group of sequences with pairwise identity in a certain range
+then use igraph to find non-redundant sets of sequences
+
+please install python-igraph,BioPython,numpy first
+
+usage: python igraph_maximal_clique_seq.py seq.fa
 """
 
 import sys
 import os
 import igraph
+import numpy as np
 from multiprocessing import Pool
 from Bio import pairwise2
 from Bio.SubsMat import MatrixInfo as matlist
@@ -83,30 +88,26 @@ def get_similarity(seqs):
     return scores
 
 def igraph_mc(p):
-    print p[-4:]
-    labels,scores,fname,cutoff1,cutoff2,mc_cutoff = p
-    adj_m = [map(lambda x: 1 if cutoff1 < x < cutoff2 else 0,row) for row in scores]
+    labels,scores,fname,cutoff = p
+    # to use clique, sequences with similarity below cutoff is linked
+    adj_m = [map(lambda x: 1 if x < cutoff else 0,row) for row in scores]
     for i in range(len(adj_m)):
         adj_m[i][i] = 0
     g = igraph.Graph.Adjacency(adj_m,mode='undirected')
     igraph.plot(g,fname+'_igraph.png')
-    # indexes = g.maximal_cliques(mc_cutoff)
     indexes = g.largest_cliques()
     mc_labels = [[labels[i] for i in index] for index in indexes ]
-    print fname,'\t',len(mc_labels)
-    return [fname,mc_labels]
+    print 'after move redundant seqs','\t',cutoff,'\t',len(mc_labels[0])
+    return fname,mc_labels
 
 def main():
-    cutoff1 = 0.6
-    cutoff2 = 0.9
-    mc_cutoff = 10 # cutoff for size of clique
     seqs = readfa(sys.argv[-1])
     labels = [pro for pro,_ in seqs]
     scores = get_similarity(seqs)
 
     fname = os.path.split(sys.argv[-1])[1].split('.')[0]+'_seq_'
 
-    parameters = [[labels,scores,fname+'_mc_seqs_'+str(cutoff1)+'_'+str(cutoff2),cutoff1,cutoff2,mc_cutoff] for cutoff1 in [0.3,0.4,0.5,0.6,0.7,0.8]]
+    parameters = [[labels,scores,fname+'_nr_seqs_'+str(cutoff),cutoff] for cutoff in [0.3,0.4,0.5,0.6,0.7,0.8]]
 
     p = Pool(6)
     results = p.map(igraph_mc,parameters)
@@ -114,12 +115,9 @@ def main():
 
     for fname,mc_labels in results:
         if mc_labels:
-            if not os.path.exists(fname):
-                os.makedirs(fname)
             for i,mc_label in enumerate(mc_labels):
                 mc_seqs = [(pro,seq) for pro,seq in seqs if pro in mc_label]
-                filename = os.path.join(fname,fname+'_mc_'+str(i)+'.fa')
-                with open(filename,'w') as w_f:
+                with open(fname+'.fa','w') as w_f:
                     for pro,seq in mc_seqs:
                         print >> w_f,'>{0}'.format(pro)
                         s = [seq[k:k+80] for k in range(0,len(seq),80)]

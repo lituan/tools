@@ -143,7 +143,7 @@ def leaf(labels, matrix):
     nr_matrix = [matrix[i] for i in range(len(matrix)) if not i in remove]
     nr_matrix = [[row[i] for i in range(
         len(matrix)) if not i in remove] for row in nr_matrix]
-    nr_labels = [i for i in range(len(matrix)) if not i in remove]
+    nr_labels = [labels[i] for i in range(len(matrix)) if not i in remove]
 
     # plot non-redundant notwork
     # graph = igraph.Graph.Adjacency(nr_matrix, mode='undirected')
@@ -164,14 +164,15 @@ def leaf_seqs(seqs,cutoff=0.9):
         matrix[i][i] = 0
 
     nr_names= leaf(seqnames, matrix)
+    print nr_names
     nr_seqs = [seq for seq in seqs if seq[0] in nr_names]
     return nr_seqs
 
 def main():
     seqs = read_fa(sys.argv[-1])
     filename = os.path.splitext(os.path.split(sys.argv[-1])[1])[0]
-    for cutoff in [0.3,0.4,0.5,0.6,0.7,0.8,0.9,0.95]:
-    # for cutoff in [0.8]:
+    # for cutoff in [0.3,0.4,0.5,0.6,0.7,0.8,0.9,0.95]:
+    for cutoff in [0.8]:
         nr_seqs = leaf_seqs(seqs,cutoff)
         with open(filename+'_nr_seqs_'+str(cutoff)+'.fas','w') as w_f:
             for pro,seq in nr_seqs:
