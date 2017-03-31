@@ -6,25 +6,25 @@ plot similarity distribution of sequences
 
 import sys
 import os
-import seaborn as sns
-import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
+import cPickle as pickle
 from Bio import pairwise2
 from Bio.SubsMat import MatrixInfo as matlist
+from multiprocessing import Pool
 
 
-def readfa(fa_f):
+def read_fa(fa_f):
     # readin seqs in fasta format
     # seqs foramt:[(pro,seq),...]
-    lines = fa_f.readlines()
-    lines = [line.rstrip('\r\n') for line in lines]
-    pro_line_num = [i for i, line in enumerate(
-        lines) if '>' in line] + [len(lines)]
-    seqs = [lines[n:pro_line_num[i + 1]]
-            for i, n in enumerate(pro_line_num[:-1])]
-    seqs = [(seq[0][1:], ''.join(seq[1:])) for seq in seqs]
-    return seqs
+    with open(fa_f) as o_f:
+        lines = o_f.readlines()
+        lines = [line.rstrip('\r\n') for line in lines]
+        pro_line_num = [i for i, line in enumerate(
+            lines) if '>' in line] + [len(lines)]
+        seqs = [lines[n:pro_line_num[i + 1]]
+                for i, n in enumerate(pro_line_num[:-1])]
+        seqs = [(seq[0][1:], ''.join(seq[1:])) for seq in seqs]
+        return seqs
 
 def align(seq1, seq2):
     matrix = matlist.blosum62
@@ -84,10 +84,26 @@ def get_similarity(seqs):
     return [r[2] for r in results]
 
 def main():
-    seqs = read_fa(sys.argv[-1])
-    scores = get_similarity(seqs)
+    seqs = read_fa('Classified1.fasta')
+    scores1 = get_similarity(seqs)
+
+    seqs = read_fa('Classified2.fasta')
+    scores2 = get_similarity(seqs)
+
+    seqs = read_fa('Classified3.fasta')
+    scores3 = get_similarity(seqs)
+
+    seqs = read_fa('Classified4.fasta')
+    scores4 = get_similarity(seqs)
+
+    pickle.dump([scores1,scores2,scores3,scores4],open('scores.pickle','w'))
+    # scores1,scores2,scores3,scores4 = pickle.load(open('scores.pickle'))
+
     f,ax = plt.subplots()
-    sns.distplot(scores)
+    sns.distplot(scores1,hist=False)
+    sns.distplot(scores2,hist=False)
+    sns.distplot(scores3,hist=False)
+    sns.distplot(scores4,hist=False)
     fname = os.path.split(sys.argv[-1])[1].split('.')[0]
     plt.savefig(fname+'_seq_similarity_dist_.png',dpi=300)
 
