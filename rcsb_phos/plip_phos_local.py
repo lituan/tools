@@ -31,6 +31,7 @@ try:
     from plip.modules import config
     from plip.modules.mp import parallel_fn
     from plip.modules.webservices import check_pdb_status, fetch_pdb
+    print 'import se'
 except ImportError:
     from modules.preparation import *
     from modules.visualize import visualize_in_pymol
@@ -193,7 +194,7 @@ def myplip(pdbf):
                                      if not config.OUTPATH.endswith('/') else config.OUTPATH)
     config.BASEPATH = config.OUTPATH  # Used for batch processing
     # config.BASEPATH = 'basetest'
-    # config.BREAKCOMPOSITE = arguments.breakcomposite
+    config.BREAKCOMPOSITE = True
     # config.ALTLOC = arguments.altlocation
     # config.PEPTIDES = False
     # config.INTRA = arguments.intra
