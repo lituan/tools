@@ -11,6 +11,8 @@ import cPickle as pickle
 from Bio import pairwise2
 from Bio.SubsMat import MatrixInfo as matlist
 from multiprocessing import Pool
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 
 def read_fa(fa_f):
@@ -26,84 +28,59 @@ def read_fa(fa_f):
         seqs = [(seq[0][1:], ''.join(seq[1:])) for seq in seqs]
         return seqs
 
-def align(seq1, seq2):
-    matrix = matlist.blosum62
-    gap_open = -10  # usual value
-    gap_extend = -0.5  # usual value
-
-    alns = pairwise2.align.globalds(seq1, seq2, matrix, gap_open, gap_extend)
-
-    seq1 = alns[0][0]
-    seq2 = alns[0][1]
-    identity = [1 for i, s in enumerate(seq1) if s == seq2[i]]
-    identity = 1.0 * len(identity)/ len(seq1)
-
-    return float('{0:<4.2f}'.format(identity))
-
-def get_similarity(seqs):
-    scores = []
-    seq_num = len(seqs)
-    for i in range(seq_num):
-        for j in range(seq_num):
-            if j > i:
-                scores.append(align(seqs[i][1],seqs[j][1]))
-    return scores
 
 def align(p):
-    s1,s2,seq1,seq2 = p
-    matrix = matlist.blosum62
+    i1,i2,seq1,seq2,blosum = p
     gap_open = -10  # usual value
     gap_extend = -0.5  # usual value
-
-    alns = pairwise2.align.globalds(seq1, seq2, matrix, gap_open, gap_extend)
-
+    alns = pairwise2.align.globalds(seq1, seq2, blosum, gap_open, gap_extend)
     seq1 = alns[0][0]
     seq2 = alns[0][1]
-    identity = [1 for i, s in enumerate(seq1) if s == seq2[i]]
-    identity = 1.0 * len(identity)/ len(seq1)
+    identical_res = [1 for i, s in enumerate(seq1) if s == seq2[i]]
+    identity = 1.0 * len(identical_res)/ len(seq1)
+    return i1,i2,round(identity,4)
 
-    return s1,s2,float('{0:<4.2f}'.format(identity))
 
 def get_similarity(seqs):
+
+    blosums = [matlist.blosum30,matlist.blosum35,matlist.blosum40,matlist.blosum45, \
+               matlist.blosum50,matlist.blosum55,matlist.blosum60,matlist.blosum62, \
+               matlist.blosum65,matlist.blosum70,matlist.blosum75,matlist.blosum80, \
+               matlist.blosum85,matlist.blosum90,matlist.blosum95,matlist.blosum100]
+
     seq_pairs = []
     seq_num = len(seqs)
     for i in range(seq_num):
         for j in range(seq_num):
             if j > i:
-                seq_pairs.append((i,j,seqs[i][1],seqs[j][1]))
+                for blosum in blosums:
+                    seq_pairs.append((i,j,seqs[i][1],seqs[j][1],blosum))
     p = Pool(6)
     results = p.map(align,seq_pairs)
     p.close()
 
-    results = sorted(results)
     scores = np.ones(shape=(seq_num,seq_num))
     for i,j,s in results:
-        scores[i][j] = s
-        scores[j][i] = s
+        if scores[i][j] == 1:
+            scores[i][j] = s
+        elif scores[i][j] < s:
+            scores[i][j] = s
+        scores[j][i] = scores[i][j]
+    pair_scores = []
+    for i in range(seq_num):
+        for j in range(seq_num):
+            if j > i:
+                pair_scores.append(scores[i][j])
 
-    return [r[2] for r in results]
+    return pair_scores
 
 def main():
-    seqs = read_fa('Classified1.fasta')
-    scores1 = get_similarity(seqs)
 
-    seqs = read_fa('Classified2.fasta')
-    scores2 = get_similarity(seqs)
-
-    seqs = read_fa('Classified3.fasta')
-    scores3 = get_similarity(seqs)
-
-    seqs = read_fa('Classified4.fasta')
-    scores4 = get_similarity(seqs)
-
-    pickle.dump([scores1,scores2,scores3,scores4],open('scores.pickle','w'))
-    # scores1,scores2,scores3,scores4 = pickle.load(open('scores.pickle'))
+    seqs = read_fa(sys.argv[-1])
+    scores = get_similarity(seqs)
 
     f,ax = plt.subplots()
-    sns.distplot(scores1,hist=False)
-    sns.distplot(scores2,hist=False)
-    sns.distplot(scores3,hist=False)
-    sns.distplot(scores4,hist=False)
+    sns.distplot(scores,hist=False)
     fname = os.path.split(sys.argv[-1])[1].split('.')[0]
     plt.savefig(fname+'_seq_similarity_dist_.png',dpi=300)
 
